@@ -63,7 +63,6 @@ Ambas APIs están restringidas a Argentina (`country=AR`) y con proximidad centr
 ## Seguridad
 
 - Las contraseñas se almacenan con hash SHA-256 antes de persistirse en Room
-- El token de Mapbox debe configurarse en `local.properties`
 
 ## Estructura del proyecto
 
