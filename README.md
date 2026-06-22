@@ -5,11 +5,16 @@ Aplicación Android que compara precios de servicios de transporte (Uber, DiDi, 
 ## Funcionalidades
 
 - Registro e inicio de sesión de usuarios
+- Recuperación de contraseña
+- Verificación de identidad por detección de rostro (CameraX + ML Kit)
 - Ingreso de origen y destino con autocompletado de direcciones
 - Cálculo de distancia real por calles usando la API de Mapbox
 - Comparación de precios entre Uber, DiDi Express y Cabify
 - Ahorro estimado respecto a la opción más cara
-- Guardado de rutas favoritas por usuario
+- Apertura directa de la app del proveedor seleccionado con origen y destino
+- Guardado y eliminación de rutas favoritas por usuario (toggle con ícono de estrella)
+- Historial de ahorros acumulados por viaje
+- Estadísticas de ahorro total y promedio por viaje
 - Cierre de sesión
 
 ## Cálculo de precios
@@ -22,13 +27,25 @@ Los precios mostrados son aproximados y se calculan en base a tres factores:
 
 La fórmula es: `precio = (tarifa_base + precio_por_km × distancia) × demanda`
 
-Esto permite que los resultados varíen levemente en cada consulta, reflejando el comportamiento real de estas aplicaciones.
+Esto permite que los resultados varíen levemente en cada consulta, simulando el comportamiento real de estas aplicaciones.
+
+## Integración con apps de transporte
+
+Al seleccionar un proveedor, la app intenta abrirlo con las coordenadas de origen y destino prellenadas:
+
+| Proveedor | Método |
+|-----------|--------|
+| **Uber** | Deeplink `uber://` con coordenadas de pickup y dropoff |
+| **Cabify** | Deeplink `cabify://cabify.com/ride` con parámetros de paradas |
+| **DiDi** | Apertura directa por nombre de paquete (`com.didiglobal.passenger`) |
+
+Si la app del proveedor no está instalada, se abre el navegador con su sitio web.
 
 ## APIs utilizadas
 
 | API | Endpoint | Para qué se usa |
 |-----|----------|-----------------|
-| **Mapbox Geocoding** | `geocoding/v5/mapbox.places` | Se usa para dos cosas: autocompletado de direcciones mientras el usuario escribe (devuelve hasta 5 sugerencias) y conversión de la dirección elegida a coordenadas (lat, lon) |
+| **Mapbox Geocoding** | `geocoding/v5/mapbox.places` | Autocompletado de direcciones y conversión a coordenadas (lat, lon) |
 | **Mapbox Directions** | `directions/v5/mapbox/driving` | Calcula la distancia real en km por calles entre dos coordenadas |
 
 Ambas APIs están restringidas a Argentina (`country=AR`) y con proximidad centrada en Buenos Aires.
@@ -36,11 +53,17 @@ Ambas APIs están restringidas a Argentina (`country=AR`) y con proximidad centr
 ## Tecnologías utilizadas
 
 - **Kotlin** con **Jetpack Compose**
-- **Room** — base de datos local para usuarios y rutas favoritas
+- **Room** — base de datos local para usuarios, rutas favoritas e historial de ahorros
 - **Retrofit** — llamadas a la API de Mapbox
-- **ViewModel** — manejo de estado
+- **CameraX + ML Kit Face Detection** — verificación de presencia del usuario
+- **ViewModel + StateFlow** — manejo de estado reactivo
 - **Navigation Compose** — navegación entre pantallas
 - **Arquitectura MVVM** con separación en capas (data, domain, ui)
+
+## Seguridad
+
+- Las contraseñas se almacenan con hash SHA-256 antes de persistirse en Room
+- El token de Mapbox debe configurarse en `local.properties`
 
 ## Estructura del proyecto
 
@@ -57,7 +80,7 @@ app/src/main/java/com/example/comparapp/
 └── ui/
     ├── components/     # Componentes reutilizables
     ├── navigation/     # Navegación de la app
-    ├── screens/        # Pantallas (login, register, main, resultados, favoritas)
+    ├── screens/        # Pantallas (login, register, main, resultados, favoritas, historial, facedetection)
     └── theme/          # Colores, tipografía y tema
 ```
 
