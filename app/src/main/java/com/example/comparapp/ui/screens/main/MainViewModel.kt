@@ -23,8 +23,8 @@ class MainViewModel(
 
     var estado by mutableStateOf(
         MainUiState(
-            nombreUsuario = AppContainer.usuarioActual?.nombre ?: "",
-            emailUsuario  = AppContainer.usuarioActual?.email  ?: ""
+            nombreUsuario = AppContainer.usuarioActual.value?.nombre ?: "",
+            emailUsuario  = AppContainer.usuarioActual.value?.email  ?: ""
         )
     )
         private set
@@ -32,7 +32,7 @@ class MainViewModel(
     private var jobOrigen: Job? = null
     private var jobDestino: Job? = null
 
-    private val usuarioId: Int get() = AppContainer.usuarioActual?.id ?: 0
+    private val usuarioId: Int get() = AppContainer.usuarioActual.value?.id ?: 0
 
     init {
         viewModelScope.launch {
@@ -111,6 +111,9 @@ class MainViewModel(
     }
 
     fun eliminarFavorita(ruta: RutaFavorita) {
+        estado = estado.copy(
+            rutasFavoritas = estado.rutasFavoritas.filter { it.id != ruta.id }
+        )
         viewModelScope.launch { rutaFavoritaRepository.eliminar(ruta) }
     }
 }

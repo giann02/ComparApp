@@ -3,6 +3,7 @@ package com.example.comparapp.ui.screens.resultados
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,6 +19,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.LocationOn
@@ -63,6 +65,7 @@ fun ResultadosContent(
     estado: ResultadosUiState,
     onBack: () -> Unit,
     onReintentar: () -> Unit,
+    onSeleccionarClick: (ProveedorResultado) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Scaffold(
@@ -88,7 +91,7 @@ fun ResultadosContent(
                 onVolver = onBack,
                 modifier = Modifier.padding(paddingValues)
             )
-            else -> Contenido(estado = estado, modifier = Modifier.padding(paddingValues))
+            else -> Contenido(estado = estado, onSeleccionarClick = onSeleccionarClick, modifier = Modifier.padding(paddingValues))
         }
     }
 }
@@ -139,6 +142,7 @@ private fun PantallaError(
 @Composable
 private fun Contenido(
     estado: ResultadosUiState,
+    onSeleccionarClick: (ProveedorResultado) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -188,20 +192,12 @@ private fun Contenido(
                     }
                 }
             }
-            Box(
-                modifier = Modifier
-                    .padding(top = 6.dp)
-                    .border(1.dp, TextHint.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
-                    .padding(6.dp)
-            ) {
-                Icon(Icons.Default.Edit, null, tint = ComparBlue, modifier = Modifier.size(16.dp))
-            }
         }
 
         Spacer(Modifier.height(24.dp))
 
         estado.proveedores.forEach { proveedor ->
-            TarjetaProveedor(proveedor = proveedor)
+            TarjetaProveedor(proveedor = proveedor, onSeleccionarClick = { onSeleccionarClick(proveedor) })
             Spacer(Modifier.height(12.dp))
         }
 
@@ -214,7 +210,7 @@ private fun Contenido(
 }
 
 @Composable
-private fun TarjetaProveedor(proveedor: ProveedorResultado) {
+private fun TarjetaProveedor(proveedor: ProveedorResultado, onSeleccionarClick: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -237,20 +233,42 @@ private fun TarjetaProveedor(proveedor: ProveedorResultado) {
             Spacer(Modifier.width(14.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                Text(proveedor.nombre, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextLabel)
+                Text(proveedor.nombre, fontWeight = FontWeight.Bold, fontSize = 19.sp, color = TextLabel)
+                Spacer(Modifier.height(2.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Default.AccessTime,
+                        contentDescription = null,
+                        tint = TextSecondary,
+                        modifier = Modifier.size(13.dp)
+                    )
+                    Spacer(Modifier.width(3.dp))
+                    Text(
+                        "${proveedor.minutos} min",
+                        fontSize = 12.sp,
+                        color = TextSecondary
+                    )
+                }
             }
 
             Column(horizontalAlignment = Alignment.End) {
-                if (proveedor.esMejor) {
-                    Box(
-                        modifier = Modifier
-                            .background(Verde, RoundedCornerShape(6.dp))
-                            .padding(horizontal = 8.dp, vertical = 3.dp)
-                    ) {
-                        Text("MÁS BARATO", color = Color.White, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp)
-                    }
-                    Spacer(Modifier.height(4.dp))
+                Box(
+                    modifier = Modifier
+                        .background(
+                            if (proveedor.esMejor) Verde else Color.Transparent,
+                            RoundedCornerShape(6.dp)
+                        )
+                        .padding(horizontal = 8.dp, vertical = 3.dp)
+                ) {
+                    Text(
+                        if (proveedor.esMejor) "MÁS BARATO" else "",
+                        color = Color.White,
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.5.sp
+                    )
                 }
+                Spacer(Modifier.height(4.dp))
                 Text(
                     formatPrecio(proveedor.precio),
                     fontSize = 22.sp,
@@ -259,12 +277,13 @@ private fun TarjetaProveedor(proveedor: ProveedorResultado) {
                 )
                 Spacer(Modifier.height(6.dp))
                 Button(
-                    onClick = {},
+                    onClick = onSeleccionarClick,
                     shape = RoundedCornerShape(20.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = ComparBlue),
-                    modifier = Modifier.height(34.dp)
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
+                    modifier = Modifier.height(40.dp)
                 ) {
-                    Text("Seleccionar", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                    Text("Seleccionar", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
         }
@@ -276,11 +295,11 @@ private fun CardAhorro(ahorro: Int) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = VerdeFondo),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFEEF4FF)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
+            modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
@@ -288,11 +307,11 @@ private fun CardAhorro(ahorro: Int) {
                     "AHORRO POTENCIAL TOTAL",
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Verde,
+                    color = TextSecondary,
                     letterSpacing = 0.5.sp
                 )
                 Spacer(Modifier.height(4.dp))
-                Text("Podés ahorrar en este viaje", fontSize = 13.sp, color = Verde.copy(alpha = 0.8f))
+                Text("Podés ahorrar en este viaje", fontSize = 11.sp, color = TextLabel)
             }
             Column(horizontalAlignment = Alignment.End) {
                 Text(formatPrecio(ahorro), fontSize = 26.sp, fontWeight = FontWeight.ExtraBold, color = ComparBlue)

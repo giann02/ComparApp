@@ -38,6 +38,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.comparapp.domain.model.RutaFavorita
+import com.example.comparapp.ui.components.ComparAppLogo
 import com.example.comparapp.ui.theme.BackgroundColor
 import com.example.comparapp.ui.theme.ComparBlue
 import com.example.comparapp.ui.theme.DividerColor
@@ -60,9 +61,7 @@ fun FavoritasContent(
         containerColor = BackgroundColor,
         topBar = {
             TopAppBar(
-                title = {
-                    Text("Mis Favoritas", fontWeight = FontWeight.Bold, color = ComparBlue)
-                },
+                title = { ComparAppLogo() },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
@@ -76,41 +75,51 @@ fun FavoritasContent(
             )
         }
     ) { paddingValues ->
-        if (estado.favoritas.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        Icons.Default.LocationOn,
-                        contentDescription = null,
-                        tint = TextHint,
-                        modifier = Modifier.size(48.dp)
-                    )
-                    Spacer(Modifier.height(12.dp))
-                    Text("No tenés favoritas guardadas", color = TextSecondary, fontSize = 15.sp)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            Text(
+                text = "Mis Favoritas",
+                fontSize = 26.sp,
+                fontWeight = FontWeight.Bold,
+                color = ComparBlue,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+            if (estado.favoritas.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(
+                            Icons.Default.LocationOn,
+                            contentDescription = null,
+                            tint = TextHint,
+                            modifier = Modifier.size(48.dp)
+                        )
+                        Spacer(Modifier.height(12.dp))
+                        Text("No tenés favoritas guardadas", color = TextSecondary, fontSize = 15.sp)
+                    }
                 }
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                item { Spacer(Modifier.height(8.dp)) }
-                items(estado.favoritas, key = { it.id }) { ruta ->
-                    TarjetaFavorita(
-                        ruta = ruta,
-                        onClick = { onRutaClick(ruta.origen, ruta.destino) },
-                        onEliminar = { onEliminar(ruta) }
-                    )
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    item { Spacer(Modifier.height(8.dp)) }
+                    items(estado.favoritas, key = { it.id }) { ruta ->
+                        TarjetaFavorita(
+                            ruta = ruta,
+                            onClick = { onRutaClick(ruta.origen, ruta.destino) },
+                            onEliminar = { onEliminar(ruta) }
+                        )
+                    }
+                    item { Spacer(Modifier.height(16.dp)) }
                 }
-                item { Spacer(Modifier.height(16.dp)) }
             }
         }
     }
@@ -143,14 +152,19 @@ private fun TarjetaFavorita(
             Spacer(Modifier.width(14.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text("ORIGEN", fontSize = 9.sp, color = TextHint, letterSpacing = 0.5.sp)
-                Text(ruta.origen, fontWeight = FontWeight.Bold, color = TextLabel, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(acortarDireccion(ruta.origen), fontWeight = FontWeight.Bold, color = TextLabel, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Spacer(Modifier.height(10.dp))
                 Text("DESTINO", fontSize = 9.sp, color = TextHint, letterSpacing = 0.5.sp)
-                Text(ruta.destino, fontWeight = FontWeight.Bold, color = TextLabel, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(acortarDireccion(ruta.destino), fontWeight = FontWeight.Bold, color = TextLabel, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             IconButton(onClick = onEliminar, modifier = Modifier.size(36.dp)) {
                 Icon(Icons.Default.DeleteOutline, contentDescription = "Eliminar", tint = TextSecondary, modifier = Modifier.size(20.dp))
             }
         }
     }
+}
+
+private fun acortarDireccion(direccion: String): String {
+    val partes = direccion.split(",").map { it.trim() }
+    return if (partes.size >= 2) "${partes[0]}, ${partes[1]}" else partes[0]
 }

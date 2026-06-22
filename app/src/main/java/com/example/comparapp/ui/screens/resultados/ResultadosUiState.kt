@@ -8,6 +8,7 @@ data class ProveedorResultado(
     val precio: Int,
     val color: Color,
     val inicial: String,
+    val minutos: Int = 0,
     val esMejor: Boolean = false
 )
 
@@ -18,5 +19,9 @@ data class ResultadosUiState(
     val ahorro: Int = 0,
     val distanciaKm: Double = 0.0,
     val isLoading: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val latOrigen: Double? = null,
+    val lonOrigen: Double? = null,
+    val latDestino: Double? = null,
+    val lonDestino: Double? = null
 )

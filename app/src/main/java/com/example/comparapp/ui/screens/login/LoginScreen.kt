@@ -14,6 +14,7 @@ import com.example.comparapp.ui.theme.BackgroundColor
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
     onNavigateToRegister: () -> Unit,
+    onOlvidarContrasena: () -> Unit = {},
     viewModel: LoginViewModel = viewModel(
         factory = viewModelFactory {
             initializer { LoginViewModel(AppContainer.usuarioRepository) }
@@ -26,6 +27,7 @@ fun LoginScreen(
         onPasswordChange = viewModel::onPasswordChange,
         onLoginClick = { viewModel.login(onLoginSuccess) },
         onRegisterClick = onNavigateToRegister,
+        onOlvidarContrasena = onOlvidarContrasena,
         modifier = Modifier
             .fillMaxSize()
             .background(BackgroundColor)

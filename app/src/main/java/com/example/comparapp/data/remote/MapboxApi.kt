@@ -14,7 +14,7 @@ interface MapboxApi {
         @Query("language") language: String = "es",
         @Query("country") country: String = "AR",
         @Query("proximity") proximity: String = "-58.3816,-34.6037",
-        @Query("types") types: String = "address",
+        @Query("types") types: String = "address,poi",
         @Query("limit") limit: Int = 5
     ): MapboxGeocodingResponse
 

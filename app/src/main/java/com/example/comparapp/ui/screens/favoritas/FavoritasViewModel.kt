@@ -21,7 +21,7 @@ class FavoritasViewModel(
         private set
 
     init {
-        val usuarioId = AppContainer.usuarioActual?.id ?: 0
+        val usuarioId = AppContainer.usuarioActual.value?.id ?: 0
         viewModelScope.launch {
             repository.obtenerFavoritas(usuarioId).collect { favoritas ->
                 estado = estado.copy(favoritas = favoritas)

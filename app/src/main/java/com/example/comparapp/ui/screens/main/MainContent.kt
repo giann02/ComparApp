@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -21,7 +23,8 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.BookmarkAdd
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Logout
@@ -189,7 +192,10 @@ fun MainContent(
             )
         },
         bottomBar = {
-            NavigationBar(containerColor = SurfaceColor) {
+            NavigationBar(
+                containerColor = SurfaceColor,
+                modifier = Modifier.navigationBarsPadding()
+            ) {
                 NavigationBarItem(
                     selected = estado.selectedTab == 0,
                     onClick = { onTabSelected(0) },
@@ -220,6 +226,7 @@ fun MainContent(
                 .fillMaxSize()
                 .padding(paddingValues)
                 .padding(horizontal = 16.dp)
+                .imePadding()
                 .verticalScroll(rememberScrollState())
         ) {
             Spacer(Modifier.height(16.dp))
@@ -238,59 +245,64 @@ fun MainContent(
             TarjetaRuta(
                 origen = estado.origen,
                 destino = estado.destino,
+                sugerenciasOrigen = estado.sugerenciasOrigen,
+                sugerenciasDestino = estado.sugerenciasDestino,
                 onOrigenChange = onOrigenChange,
                 onDestinoChange = onDestinoChange,
-                onSwapClick = onSwapClick
+                onSwapClick = onSwapClick,
+                onSugerenciaOrigenClick = onSugerenciaOrigenClick,
+                onSugerenciaDestinoClick = onSugerenciaDestinoClick
             )
 
-            if (estado.sugerenciasOrigen.isNotEmpty()) {
-                TarjetaSugerencias(
-                    sugerencias = estado.sugerenciasOrigen,
-                    onSugerenciaClick = onSugerenciaOrigenClick
-                )
-            } else if (estado.sugerenciasDestino.isNotEmpty()) {
-                TarjetaSugerencias(
-                    sugerencias = estado.sugerenciasDestino,
-                    onSugerenciaClick = onSugerenciaDestinoClick
-                )
-            }
-
             if (estado.origen.isNotBlank() && estado.destino.isNotBlank()) {
+                val esRutaFavorita = estado.rutasFavoritas.any {
+                    it.origen.trim().equals(estado.origen.trim(), ignoreCase = true) &&
+                    it.destino.trim().equals(estado.destino.trim(), ignoreCase = true)
+                }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    TextButton(
+                    IconButton(
                         onClick = {
-                            val guardado = onGuardarFavorita()
                             scope.launch {
-                                val mensaje = if (guardado)
-                                    "Ruta guardada en favoritas"
-                                else
-                                    "Esta ruta ya está en tus favoritas"
-                                snackbarHostState.showSnackbar(mensaje)
+                                if (esRutaFavorita) {
+                                    val ruta = estado.rutasFavoritas.first {
+                                        it.origen.trim().equals(estado.origen.trim(), ignoreCase = true) &&
+                                        it.destino.trim().equals(estado.destino.trim(), ignoreCase = true)
+                                    }
+                                    onEliminarFavorita(ruta)
+                                    snackbarHostState.showSnackbar("Ruta eliminada de favoritas")
+                                } else {
+                                    onGuardarFavorita()
+                                    snackbarHostState.showSnackbar("Ruta guardada en favoritas")
+                                }
                             }
                         }
                     ) {
                         Icon(
-                            Icons.Default.BookmarkAdd,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp),
+                            if (esRutaFavorita) Icons.Default.Star else Icons.Default.StarBorder,
+                            contentDescription = if (esRutaFavorita) "Eliminar de favoritas" else "Guardar como favorita",
+                            modifier = Modifier.size(26.dp),
                             tint = ComparBlue
                         )
-                        Spacer(Modifier.width(6.dp))
-                        Text("Guardar como favorita", color = ComparBlue, fontSize = 13.sp)
                     }
                 }
             } else {
                 Spacer(Modifier.height(16.dp))
             }
 
+            val puedeComparar = estado.origen.isNotBlank() && estado.destino.isNotBlank()
             Button(
                 onClick = onCompararClick,
                 modifier = Modifier.fillMaxWidth().height(52.dp),
                 shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = ComparBlue)
+                enabled = puedeComparar,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = ComparBlue,
+                    disabledContainerColor = Color(0xFFCCCCCC),
+                    disabledContentColor = Color(0xFF999999)
+                )
             ) {
                 Text("Comparar →", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
             }
@@ -347,9 +359,13 @@ fun MainContent(
 private fun TarjetaRuta(
     origen: String,
     destino: String,
+    sugerenciasOrigen: List<String>,
+    sugerenciasDestino: List<String>,
     onOrigenChange: (String) -> Unit,
     onDestinoChange: (String) -> Unit,
-    onSwapClick: () -> Unit
+    onSwapClick: () -> Unit,
+    onSugerenciaOrigenClick: (String) -> Unit,
+    onSugerenciaDestinoClick: (String) -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -358,7 +374,9 @@ private fun TarjetaRuta(
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+            Column(modifier = Modifier.padding(start = 16.dp, end = 56.dp, top = 8.dp, bottom = 8.dp)) {
+
+                // Campo origen
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -387,11 +405,32 @@ private fun TarjetaRuta(
                     )
                 }
 
+                // Sugerencias origen
+                if (sugerenciasOrigen.isNotEmpty()) {
+                    HorizontalDivider(color = DividerColor)
+                    sugerenciasOrigen.forEachIndexed { index, sugerencia ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onSugerenciaOrigenClick(sugerencia) }
+                                .padding(horizontal = 4.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.LocationOn, null, tint = TextSecondary, modifier = Modifier.size(16.dp))
+                            Spacer(Modifier.width(10.dp))
+                            Text(sugerencia, fontSize = 13.sp, color = TextLabel, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                        }
+                        if (index < sugerenciasOrigen.lastIndex)
+                            HorizontalDivider(modifier = Modifier.padding(start = 26.dp), color = DividerColor)
+                    }
+                }
+
                 HorizontalDivider(
                     modifier = Modifier.padding(start = 32.dp, end = 56.dp),
                     color = DividerColor
                 )
 
+                // Campo destino
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -418,6 +457,26 @@ private fun TarjetaRuta(
                             innerTextField()
                         }
                     )
+                }
+
+                // Sugerencias destino
+                if (sugerenciasDestino.isNotEmpty()) {
+                    HorizontalDivider(color = DividerColor)
+                    sugerenciasDestino.forEachIndexed { index, sugerencia ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onSugerenciaDestinoClick(sugerencia) }
+                                .padding(horizontal = 4.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.LocationOn, null, tint = TextSecondary, modifier = Modifier.size(16.dp))
+                            Spacer(Modifier.width(10.dp))
+                            Text(sugerencia, fontSize = 13.sp, color = TextLabel, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                        }
+                        if (index < sugerenciasDestino.lastIndex)
+                            HorizontalDivider(modifier = Modifier.padding(start = 26.dp), color = DividerColor)
+                    }
                 }
             }
 
@@ -508,11 +567,16 @@ private fun TarjetaRutaFavorita(
             Spacer(Modifier.width(14.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text("ORIGEN", fontSize = 9.sp, color = TextHint, letterSpacing = 0.5.sp)
-                Text(ruta.origen, fontWeight = FontWeight.Bold, color = TextLabel, fontSize = 14.sp, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                Text(acortarDireccion(ruta.origen), fontWeight = FontWeight.Bold, color = TextLabel, fontSize = 14.sp, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                 Spacer(Modifier.height(10.dp))
                 Text("DESTINO", fontSize = 9.sp, color = TextHint, letterSpacing = 0.5.sp)
-                Text(ruta.destino, fontWeight = FontWeight.Bold, color = TextLabel, fontSize = 14.sp, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                Text(acortarDireccion(ruta.destino), fontWeight = FontWeight.Bold, color = TextLabel, fontSize = 14.sp, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
             }
         }
     }
+}
+
+private fun acortarDireccion(direccion: String): String {
+    val partes = direccion.split(",").map { it.trim() }
+    return if (partes.size >= 2) "${partes[0]}, ${partes[1]}" else partes[0]
 }

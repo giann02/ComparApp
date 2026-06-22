@@ -15,4 +15,7 @@ interface UsuarioDao {
 
     @Query("SELECT COUNT(*) FROM usuarios WHERE LOWER(email) = LOWER(:email)")
     suspend fun contarPorEmail(email: String): Int
+
+    @Query("UPDATE usuarios SET password = :password WHERE LOWER(email) = LOWER(:email)")
+    suspend fun actualizarPassword(email: String, password: String)
 }

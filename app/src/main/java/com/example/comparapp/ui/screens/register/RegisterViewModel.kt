@@ -32,7 +32,7 @@ class RegisterViewModel(
         viewModelScope.launch {
             repository.registrar(estado.nombre, estado.email, estado.password)
                 .onSuccess { usuario ->
-                    AppContainer.usuarioActual = usuario
+                    AppContainer.setUsuario(usuario)
                     estado = estado.copy(isLoading = false)
                     onSuccess()
                 }
